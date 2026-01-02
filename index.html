@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIREシミュレーター</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            color: #6c757d;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-top: 20px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .result-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .fire-style-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .fire-style-box h3 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        .fire-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .fire-info-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .fire-info-item strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .fire-info-item span {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            font-size: 0.85em;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: right;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .important-col {
+            background: #e7f3ff;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .help-text {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 FIREシミュレーター</h1>
+            <p>あなたのFIRE達成までの道のりを可視化します</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('basic')">基本設定</button>
+            <button class="tab" onclick="switchTab('assets')">現在資産</button>
+            <button class="tab" onclick="switchTab('loan')">住宅ローン</button>
+            <button class="tab" onclick="switchTab('education')">教育費</button>
+            <button class="tab" onclick="switchTab('income')">収入設定</button>
+            <button class="tab" onclick="switchTab('expenses')">支出設定</button>
+            <button class="tab" onclick="switchTab('results')">シミュレーション結果</button>
+        </div>
+        
+        <!-- 基本設定タブ -->
+        <div id="basic" class="tab-content active">
+            <h2 class="section-title">基本設定</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>現在の年齢</label>
+                    <input type="number" id="currentAge" value="35" min="20" max="80">
+                </div>
+                <div class="form-group">
+                    <label>配偶者の年齢</label>
+                    <input type="number" id="spouseAge" value="33" min="0" max="80">
+                    <span class="help-text">※配偶者がいない場合は0を入力</span>
+                </div>
+                <div class="form-group">
+                    <label>想定寿命</label>
+                    <input type="number" id="lifeExpectancy" value="95" min="60" max="120">
+                </div>
+                <div class="form-group">
+                    <label>FIRE目標年齢</label>
+                    <input type="number" id="fireAge" value="45" min="30" max="80">
+                </div>
+            </div>
+            
+            <h2 class="section-title" style="margin-top: 30px;">家族構成</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>子どもの人数</label>
+                    <select id="numChildren">
+                        <option value="0">0人</option>
+                        <option value="1">1人</option>
+                        <option value="2" selected>2人</option>
+                        <option value="3">3人</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>第1子の現在年齢</label>
+                    <input type="number" id="child1Age" value="5" min="0" max="30">
+                </div>
+                <div class="form-group">
+                    <label>第2子の現在年齢</label>
+                    <input type="number" id="child2Age" value="3" min="0" max="30">
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveData(); switchTab('assets')">次へ：現在資産 →</button>
+        </div>
+        
+        <!-- 現在資産タブ -->
+        <div id="assets" class="tab-content">
+            <h2 class="section-title">現在資産</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>総金融資産（万円）</label>
+                    <input type="number" id="totalAssets" value="2000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>生活防衛資金（万円）</label>
+                    <input type="number" id="emergencyFund" value="360" min="0">
+                    <span class="help-text">※推奨：月額生活費×12ヶ月</span>
+                </div>
+                <div class="form-group">
+                    <label>想定運用利回り（年%）</label>
+                    <input type="number" id="returnRate" value="5" min="0" max="20" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>月額積立投資額（万円）</label>
+                    <input type="number" id="monthlyInvestment" value="5" min="0">
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveData(); switchTab('loan')">次へ：住宅ローン →</button>
+        </div>
+        
+        <!-- 住宅ローンタブ -->
+        <div id="loan" class="tab-content">
+            <h2 class="section-title">住宅ローン</h2>
+            <div class="form-group">
+                <label>住宅ローンの有無</label>
+                <select id="hasLoan" onchange="toggleLoanFields()">
+                    <option value="yes">ある</option>
+                    <option value="no">ない</option>
+                </select>
+            </div>
+            
+            <div id="loanFields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>借入残高（万円）</label>
+                        <input type="number" id="loanBalance" value="4900" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>返済期間（残り年数）</label>
+                        <input type="number" id="loanYears" value="30" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>金利タイプ</label>
+                        <select id="loanType" onchange="toggleRateScenario()">
+                            <option value="fixed">固定金利</option>
+                            <option value="variable">変動金利</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>現在の金利（年%）</label>
+                        <input type="number" id="currentRate" value="0.5" min="0" max="10" step="0.01">
+                    </div>
+                </div>
+                
+                <div id="rateScenario" style="display:none;">
+                    <h3 class="section-title">金利上昇シナリオ</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>5年後までの金利（年%）</label>
+                            <input type="number" id="rate5y" value="0.5" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>10年後までの金利（年%）</label>
+                            <input type="number" id="rate10y" value="1.0" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>15年後以降の金利（年%）</label>
+                            <input type="number" id="rate15y" value="1.5" min="0" max="10" step="0.1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveData(); switchTab('education')">次へ：教育費 →</button>
+        </div>
+        
+        <!-- 教育費タブ -->
+        <div id="education" class="tab-content">
+            <h2 class="section-title">教育費</h2>
+            <div class="note">
+                <strong>💡 ヒント</strong><br>
+                プルダウンで選択すると自動で金額が入ります。個別に金額を変更したい場合は直接入力してください。
+            </div>
+            
+            <h3 style="margin-top: 20px; color: #667eea;">第1子の教育費</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>幼稚園（3年間総額・万円）</label>
+                    <select id="child1Kinder" onchange="updateEducationCost('child1Kinder', 'child1KinderCost')">
+                        <option value="48">公立（48万円）</option>
+                        <option value="93">私立（93万円）</option>
+                    </select>
+                    <input type="number" id="child1KinderCost" value="48" min="0">
+                </div>
+                <div class="form-group">
+                    <label>小学校（6年間総額・万円）</label>
+                    <select id="child1Elem" onchange="updateEducationCost('child1Elem', 'child1ElemCost')">
+                        <option value="210">公立（210万円）</option>
+                        <option value="1002">私立（1002万円）</option>
+                    </select>
+                    <input type="number" id="child1ElemCost" value="210" min="0">
+                </div>
+                <div class="form-group">
+                    <label>中学校（3年間総額・万円）</label>
+                    <select id="child1Junior" onchange="updateEducationCost('child1Junior', 'child1JuniorCost')">
+                        <option value="162">公立（162万円）</option>
+                        <option value="432">私立（432万円）</option>
+                    </select>
+                    <input type="number" id="child1JuniorCost" value="162" min="0">
+                </div>
+                <div class="form-group">
+                    <label>高校（3年間総額・万円）</label>
+                    <select id="child1High" onchange="updateEducationCost('child1High', 'child1HighCost')">
+                        <option value="153">公立（153万円）</option>
+                        <option value="315">私立（315万円）</option>
+                    </select>
+                    <input type="number" id="child1HighCost" value="153" min="0">
+                </div>
+                <div class="form-group">
+                    <label>大学（4年間総額・万円）</label>
+                    <select id="child1Univ" onchange="updateEducationCost('child1Univ', 'child1UnivCost')">
+                        <option value="400">国立自宅（400万円）</option>
+                        <option value="600">国立下宿（600万円）</option>
+                        <option value="520">私立文系自宅（520万円）</option>
+                        <option value="720">私立文系下宿（720万円）</option>
+                        <option value="640">私立理系自宅（640万円）</option>
+                        <option value="840">私立理系下宿（840万円）</option>
+                    </select>
+                    <input type="number" id="child1UnivCost" value="400" min="0">
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 30px; color: #667eea;">第2子の教育費</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>幼稚園（3年間総額・万円）</label>
+                    <select id="child2Kinder" onchange="updateEducationCost('child2Kinder', 'child2KinderCost')">
+                        <option value="48">公立（48万円）</option>
+                        <option value="93">私立（93万円）</option>
+                    </select>
+                    <input type="number" id="child2KinderCost" value="48" min="0">
+                </div>
+                <div class="form-group">
+                    <label>小学校（6年間総額・万円）</label>
+                    <select id="child2Elem" onchange="updateEducationCost('child2Elem', 'child2ElemCost')">
+                        <option value="210">公立（210万円）</option>
+                        <option value="1002">私立（1002万円）</option>
+                    </select>
+                    <input type="number" id="child2ElemCost" value="210" min="0">
+                </div>
+                <div class="form-group">
+                    <label>中学校（3年間総額・万円）</label>
+                    <select id="child2Junior" onchange="updateEducationCost('child2Junior', 'child2JuniorCost')">
+                        <option value="162">公立（162万円）</option>
+                        <option value="432">私立（432万円）</option>
+                    </select>
+                    <input type="number" id="child2JuniorCost" value="162" min="0">
+                </div>
+                <div class="form-group">
+                    <label>高校（3年間総額・万円）</label>
+                    <select id="child2High" onchange="updateEducationCost('child2High', 'child2HighCost')">
+                        <option value="153">公立（153万円）</option>
+                        <option value="315">私立（315万円）</option>
+                    </select>
+                    <input type="number" id="child2HighCost" value="153" min="0">
+                </div>
+                <div class="form-group">
+                    <label>大学（4年間総額・万円）</label>
+                    <select id="child2Univ" onchange="updateEducationCost('child2Univ', 'child2UnivCost')">
+                        <option value="400">国立自宅（400万円）</option>
+                        <option value="600">国立下宿（600万円）</option>
+                        <option value="520">私立文系自宅（520万円）</option>
+                        <option value="720">私立文系下宿（720万円）</option>
+                        <option value="640">私立理系自宅（640万円）</option>
+                        <option value="840">私立理系下宿（840万円）</option>
+                    </select>
+                    <input type="number" id="child2UnivCost" value="400" min="0">
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveData(); switchTab('income')">次へ：収入設定 →</button>
+        </div>
+        
+        <!-- 収入設定タブ -->
+        <div id="income" class="tab-content">
+            <h2 class="section-title">本業収入</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>現在の年収（万円）</label>
+                    <input type="number" id="currentIncome" value="800" min="0">
+                </div>
+                <div class="form-group">
+                    <label>昇給率（年%）</label>
+                    <input type="number" id="salaryGrowth" value="1" min="0" max="10" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>退職金（万円）</label>
+                    <input type="number" id="retirement" value="500" min="0">
+                </div>
+            </div>
+            
+            <h2 class="section-title" style="margin-top: 30px;">副業収入</h2>
+            <div class="form-group">
+                <label>副業をする</label>
+                <select id="hasSideJob" onchange="toggleSideJobFields()">
+                    <option value="yes">はい</option>
+                    <option value="no">いいえ</option>
+                </select>
+            </div>
+            
+            <div id="sideJobFields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>現在の副業月収（万円）</label>
+                        <input type="number" id="sideJobNow" value="2.5" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>フェーズ1（〜5年後）月収（万円）</label>
+                        <input type="number" id="sideJobPhase1" value="2.5" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>フェーズ2（6〜10年後）月収（万円）</label>
+                        <input type="number" id="sideJobPhase2" value="10" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>フェーズ3（11年後〜）月収（万円）</label>
+                        <input type="number" id="sideJobPhase3" value="15" min="0" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>副業の終了時期</label>
+                    <select id="sideJobEnd" onchange="toggleSideJobEndAge()">
+                        <option value="continue">継続する</option>
+                        <option value="age">〇歳で終了</option>
+                    </select>
+                </div>
+                <div class="form-group" id="sideJobEndAgeField" style="display:none;">
+                    <label>終了年齢</label>
+                    <input type="number" id="sideJobEndAge" value="65" min="40" max="100">
+                </div>
+            </div>
+            
+            <h2 class="section-title" style="margin-top: 30px;">FIRE後の労働収入</h2>
+            <div class="form-group">
+                <label>FIRE後も働く</label>
+                <select id="hasFireWork" onchange="toggleFireWorkFields()">
+                    <option value="yes">はい</option>
+                    <option value="no">いいえ</option>
+                </select>
+            </div>
+            
+            <div id="fireWorkFields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>時給（円）</label>
+                        <input type="number" id="hourlyWage" value="1500" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>週の勤務日数（日）</label>
+                        <input type="number" id="workDays" value="3" min="1" max="7">
+                    </div>
+                    <div class="form-group">
+                        <label>1日の勤務時間（時間）</label>
+                        <input type="number" id="workHours" value="6" min="1" max="12">
+                    </div>
+                    <div class="form-group">
+                        <label>労働終了年齢</label>
+                        <input type="number" id="fireWorkEndAge" value="65" min="40" max="100">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveData(); switchTab('expenses')">次へ：支出設定 →</button>
+        </div>
+        
+        <!-- 支出設定タブ -->
+        <div id="expenses" class="tab-content">
+            <h2 class="section-title">生活費</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>現在の月額生活費（万円）</label>
+                    <input type="number" id="monthlyExpenses" value="30" min="0">
+                </div>
+                <div class="form-group">
+                    <label>FIRE後の生活費（現在の%）</label>
+                    <input type="number" id="fireExpensesRate" value="80" min="0" max="150">
+                    <span class="help-text">※通勤費・昼食代が減る想定</span>
+                </div>
+            </div>
+            
+            <h2 class="section-title" style="margin-top: 30px;">その他支出</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>年間車両費（万円）</label>
+                    <input type="number" id="carExpenses" value="50" min="0">
+                    <span class="help-text">※維持費＋買い替え費用の平均</span>
+                </div>
+                <div class="form-group">
+                    <label>年間保険料（万円）</label>
+                    <input type="number" id="insurance" value="40" min="0">
+                </div>
+                <div class="form-group">
+                    <label>住宅修繕費（10年ごと・万円）</label>
+                    <input type="number" id="houseRepair" value="100" min="0">
+                </div>
+                <div class="form-group">
+                    <label>その他支出（年額・万円）</label>
+                    <input type="number" id="otherExpenses" value="30" min="0">
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="calculate()">シミュレーション実行 🚀</button>
+        </div>
+        
+        <!-- 結果タブ -->
+        <div id="results" class="tab-content">
+            <div id="resultsContent">
+                <div class="note">
+                    <strong>📊 使い方</strong><br>
+                    各タブで情報を入力し、「シミュレーション実行」ボタンを押してください。
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // パスワード認証
+        (function() {
+            const correctPassword = "fire2024premium";
+            const authKey = "fireSimulatorAuth";
+            
+            // 既に認証済みかチェック
+            const savedAuth = sessionStorage.getItem(authKey);
+            
+            if (savedAuth !== correctPassword) {
+                let attempts = 0;
+                while (attempts < 3) {
+                    const inputPassword = prompt("パスワードを入力してください：");
+                    
+                    if (inputPassword === null) {
+                        // キャンセルされた
+                        document.body.innerHTML = "<div style='text-align:center;padding:50px;font-size:20px;'>アクセスがキャンセルされました</div>";
+                        throw new Error("Authentication cancelled");
+                    }
+                    
+                    if (inputPassword === correctPassword) {
+                        sessionStorage.setItem(authKey, correctPassword);
+                        break;
+                    }
+                    
+                    attempts++;
+                    if (attempts < 3) {
+                        alert("パスワードが違います。もう一度入力してください。");
+                    } else {
+                        document.body.innerHTML = "<div style='text-align:center;padding:50px;font-size:20px;color:red;'>認証に失敗しました。正しいパスワードを入力してください。</div>";
+                        throw new Error("Authentication failed");
+                    }
+                }
+            }
+        })();
+        
+        // グローバル変数
+        let cashflowData = [];
+        let charts = {};
+        
+        // タブ切り替え
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            saveData();
+        }
+        
+        // データ保存
+        function saveData() {
+            const formData = {};
+            document.querySelectorAll('input, select').forEach(el => {
+                formData[el.id] = el.value;
+            });
+            localStorage.setItem('fireSimulator', JSON.stringify(formData));
+        }
+        
+        // データ読み込み
+        function loadData() {
+            const saved = localStorage.getItem('fireSimulator');
+            if (saved) {
+                const formData = JSON.parse(saved);
+                Object.keys(formData).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) el.value = formData[key];
+                });
+                toggleLoanFields();
+                toggleRateScenario();
+                toggleSideJobFields();
+                toggleSideJobEndAge();
+                toggleFireWorkFields();
+            }
+        }
+        
+        // 各種フィールド表示切り替え
+        function toggleLoanFields() {
+            const hasLoan = document.getElementById('hasLoan').value;
+            document.getElementById('loanFields').style.display = hasLoan === 'yes' ? 'block' : 'none';
+        }
+        
+        function toggleRateScenario() {
+            const loanType = document.getElementById('loanType').value;
+            document.getElementById('rateScenario').style.display = loanType === 'variable' ? 'block' : 'none';
+        }
+        
+        function toggleSideJobFields() {
+            const hasSideJob = document.getElementById('hasSideJob').value;
+            document.getElementById('sideJobFields').style.display = hasSideJob === 'yes' ? 'block' : 'none';
+        }
+        
+        function toggleSideJobEndAge() {
+            const sideJobEnd = document.getElementById('sideJobEnd').value;
+            document.getElementById('sideJobEndAgeField').style.display = sideJobEnd === 'age' ? 'block' : 'none';
+        }
+        
+        function toggleFireWorkFields() {
+            const hasFireWork = document.getElementById('hasFireWork').value;
+            document.getElementById('fireWorkFields').style.display = hasFireWork === 'yes' ? 'block' : 'none';
+        }
+        
+        function updateEducationCost(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            input.value = select.value;
+        }
+        
+        // メイン計算関数
+        function calculate() {
+            saveData();
+            
+            // 入力値取得
+            const currentAge = parseInt(document.getElementById('currentAge').value);
+            const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+            const fireAge = parseInt(document.getElementById('fireAge').value);
+            const totalAssets = parseFloat(document.getElementById('totalAssets').value);
+            const emergencyFund = parseFloat(document.getElementById('emergencyFund').value);
+            const returnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+            const monthlyInvestment = parseFloat(document.getElementById('monthlyInvestment').value);
+            const inflationRate = 0.02; // 2%固定
+            
+            // 初期資産
+            let investmentAssets = totalAssets - emergencyFund;
+            let currentYear = new Date().getFullYear();
+            
+            cashflowData = [];
+            
+            for (let age = currentAge; age <= lifeExpectancy; age++) {
+                const year = currentYear + (age - currentAge);
+                const yearsSinceStart = age - currentAge;
+                
+                // 収入計算
+                let mainIncome = 0;
+                if (age < fireAge) {
+                    const salaryGrowth = parseFloat(document.getElementById('salaryGrowth').value) / 100;
+                    mainIncome = parseFloat(document.getElementById('currentIncome').value) * Math.pow(1 + salaryGrowth, yearsSinceStart);
+                } else if (age === fireAge) {
+                    mainIncome = parseFloat(document.getElementById('retirement').value);
+                }
+                
+                let sideJobIncome = 0;
+                if (document.getElementById('hasSideJob').value === 'yes') {
+                    const endType = document.getElementById('sideJobEnd').value;
+                    const endAge = endType === 'age' ? parseInt(document.getElementById('sideJobEndAge').value) : 999;
+                    
+                    if (age < endAge) {
+                        if (yearsSinceStart <= 5) {
+                            sideJobIncome = parseFloat(document.getElementById('sideJobPhase1').value) * 12;
+                        } else if (yearsSinceStart <= 10) {
+                            sideJobIncome = parseFloat(document.getElementById('sideJobPhase2').value) * 12;
+                        } else {
+                            sideJobIncome = parseFloat(document.getElementById('sideJobPhase3').value) * 12;
+                        }
+                    }
+                }
+                
+                let fireWorkIncome = 0;
+                if (age >= fireAge && document.getElementById('hasFireWork').value === 'yes') {
+                    const endAge = parseInt(document.getElementById('fireWorkEndAge').value);
+                    if (age < endAge) {
+                        const hourlyWage = parseFloat(document.getElementById('hourlyWage').value) / 10000;
+                        const workDays = parseFloat(document.getElementById('workDays').value);
+                        const workHours = parseFloat(document.getElementById('workHours').value);
+                        fireWorkIncome = hourlyWage * workDays * workHours * 52;
+                    }
+                }
+                
+                // 運用益（月次複利を年次で近似）
+                const monthlyRate = returnRate / 12;
+                let yearInvestmentReturn = 0;
+                for (let month = 0; month < 12; month++) {
+                    yearInvestmentReturn += investmentAssets * monthlyRate;
+                    investmentAssets += investmentAssets * monthlyRate + monthlyInvestment;
+                }
+                
+                // 年金（簡易計算）
+                let pension = 0;
+                if (age >= 65) {
+                    if (document.getElementById('hasFireWork').value === 'yes' && age < parseInt(document.getElementById('fireWorkEndAge').value)) {
+                        pension = 180; // 厚生年金想定
+                    } else {
+                        pension = age >= fireAge ? 78 : 180; // サイドFIREなら国民年金
+                    }
+                }
+                
+                const totalIncome = mainIncome + sideJobIncome + fireWorkIncome + yearInvestmentReturn + pension;
+                
+                // 支出計算
+                const inflationMultiplier = Math.pow(1 + inflationRate, yearsSinceStart);
+                
+                let monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value) * 12;
+                if (age >= fireAge) {
+                    monthlyExpenses *= parseFloat(document.getElementById('fireExpensesRate').value) / 100;
+                }
+                monthlyExpenses *= inflationMultiplier;
+                
+                // 教育費
+                let educationCost = calculateEducationCost(age, yearsSinceStart, inflationMultiplier);
+                
+                // 住宅ローン
+                let loanPayment = 0;
+                if (document.getElementById('hasLoan').value === 'yes') {
+                    loanPayment = calculateLoanPayment(yearsSinceStart);
+                }
+                
+                // その他支出
+                let carExpenses = parseFloat(document.getElementById('carExpenses').value) * inflationMultiplier;
+                let insurance = parseFloat(document.getElementById('insurance').value) * inflationMultiplier;
+                let houseRepair = (yearsSinceStart > 0 && yearsSinceStart % 10 === 0) ? parseFloat(document.getElementById('houseRepair').value) : 0;
+                let otherExpenses = parseFloat(document.getElementById('otherExpenses').value) * inflationMultiplier;
+                
+                // 税金・社保（簡易計算：収入の20%）
+                const taxAndSocial = (mainIncome + sideJobIncome + fireWorkIncome) * 0.20;
+                
+                const totalExpenses = monthlyExpenses + educationCost + loanPayment + carExpenses + insurance + houseRepair + otherExpenses + taxAndSocial;
+                
+                const cashflow = totalIncome - totalExpenses;
+                investmentAssets += cashflow - monthlyInvestment * 12;
+                
+                // ローン残債計算（簡易）
+                let loanBalance = 0;
+                if (document.getElementById('hasLoan').value === 'yes') {
+                    const initialBalance = parseFloat(document.getElementById('loanBalance').value);
+                    const loanYears = parseInt(document.getElementById('loanYears').value);
+                    if (yearsSinceStart < loanYears) {
+                        loanBalance = initialBalance * (1 - yearsSinceStart / loanYears);
+                    }
+                }
+                
+                const totalAsset = investmentAssets + emergencyFund;
+                const netAsset = totalAsset - loanBalance;
+                
+                cashflowData.push({
+                    year,
+                    age,
+                    mainIncome: Math.round(mainIncome),
+                    sideJobIncome: Math.round(sideJobIncome),
+                    fireWorkIncome: Math.round(fireWorkIncome),
+                    investmentReturn: Math.round(yearInvestmentReturn),
+                    pension: Math.round(pension),
+                    totalIncome: Math.round(totalIncome),
+                    taxAndSocial: Math.round(taxAndSocial),
+                    monthlyExpenses: Math.round(monthlyExpenses),
+                    educationCost: Math.round(educationCost),
+                    loanPayment: Math.round(loanPayment),
+                    otherExpenses: Math.round(carExpenses + insurance + houseRepair + otherExpenses),
+                    totalExpenses: Math.round(totalExpenses),
+                    cashflow: Math.round(cashflow),
+                    totalAsset: Math.round(totalAsset),
+                    netAsset: Math.round(netAsset)
+                });
+            }
+            
+            displayResults();
+        }
+        
+        function calculateEducationCost(age, yearsSinceStart, inflationMultiplier) {
+            const numChildren = parseInt(document.getElementById('numChildren').value);
+            let total = 0;
+            
+            for (let i = 1; i <= numChildren; i++) {
+                const childAge = parseInt(document.getElementById(`child${i}Age`).value) + yearsSinceStart;
+                
+                // 幼稚園 3-5歳
+                if (childAge >= 3 && childAge <= 5) {
+                    total += parseFloat(document.getElementById(`child${i}KinderCost`).value) / 3 * inflationMultiplier;
+                }
+                // 小学校 6-11歳
+                else if (childAge >= 6 && childAge <= 11) {
+                    total += parseFloat(document.getElementById(`child${i}ElemCost`).value) / 6 * inflationMultiplier;
+                }
+                // 中学校 12-14歳
+                else if (childAge >= 12 && childAge <= 14) {
+                    total += parseFloat(document.getElementById(`child${i}JuniorCost`).value) / 3 * inflationMultiplier;
+                }
+                // 高校 15-17歳
+                else if (childAge >= 15 && childAge <= 17) {
+                    total += parseFloat(document.getElementById(`child${i}HighCost`).value) / 3 * inflationMultiplier;
+                }
+                // 大学 18-21歳
+                else if (childAge >= 18 && childAge <= 21) {
+                    total += parseFloat(document.getElementById(`child${i}UnivCost`).value) / 4 * inflationMultiplier;
+                }
+            }
+            
+            return total;
+        }
+        
+        function calculateLoanPayment(yearsSinceStart) {
+            const loanBalance = parseFloat(document.getElementById('loanBalance').value);
+            const loanYears = parseInt(document.getElementById('loanYears').value);
+            const currentRate = parseFloat(document.getElementById('currentRate').value) / 100;
+            
+            if (yearsSinceStart >= loanYears) return 0;
+            
+            let rate = currentRate;
+            if (document.getElementById('loanType').value === 'variable') {
+                if (yearsSinceStart <= 5) {
+                    rate = parseFloat(document.getElementById('rate5y').value) / 100;
+                } else if (yearsSinceStart <= 10) {
+                    rate = parseFloat(document.getElementById('rate10y').value) / 100;
+                } else {
+                    rate = parseFloat(document.getElementById('rate15y').value) / 100;
+                }
+            }
+            
+            // 元利均等返済の年間返済額（簡易計算）
+            const monthlyRate = rate / 12;
+            const remainingMonths = (loanYears - yearsSinceStart) * 12;
+            const monthlyPayment = loanBalance * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths) / 
+                                  (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+            
+            return monthlyPayment * 12 / 10000; // 万円単位
+        }
+        
+        function displayResults() {
+            // FIREスタイル判定
+            const hasSideJob = document.getElementById('hasSideJob').value === 'yes';
+            const hasFireWork = document.getElementById('hasFireWork').value === 'yes';
+            
+            let fireStyle = '';
+            let fireStyleDesc = '';
+            
+            if (!hasSideJob && !hasFireWork) {
+                fireStyle = '完全FIRE';
+                fireStyleDesc = '会社を辞めた後、労働収入なしで生活。資産運用益と年金のみで暮らします。最も資産が必要ですが、完全な自由が得られます。';
+            } else if (hasSideJob && !hasFireWork) {
+                fireStyle = 'サイドFIRE';
+                fireStyleDesc = '会社を辞めた後、副業（個人事業）で稼ぎながら生活。好きな仕事を続けつつ、必要最低限の収入を得るスタイルです。';
+            } else if (!hasSideJob && hasFireWork) {
+                fireStyle = 'バリスタFIRE';
+                fireStyleDesc = '会社を辞めた後、パート・アルバイトで働きながら生活。週数日の労働で収入を得て、厚生年金を継続できる場合があります。';
+            } else {
+                fireStyle = 'ハイブリッド型FIRE';
+                fireStyleDesc = '会社を辞めた後、副業とパート労働の両方で収入を得るスタイル。収入源が複数あるため、リスク分散ができます。';
+            }
+            
+            // FIRE達成年判定
+            const fireAge = parseInt(document.getElementById('fireAge').value);
+            let fireAchieved = false;
+            let fireYear = null;
+            
+            for (let i = 0; i < cashflowData.length; i++) {
+                if (cashflowData[i].age >= fireAge) {
+                    let allPositive = true;
+                    for (let j = i; j < cashflowData.length; j++) {
+                        if (cashflowData[j].netAsset <= 0) {
+                            allPositive = false;
+                            break;
+                        }
+                    }
+                    if (allPositive) {
+                        fireAchieved = true;
+                        fireYear = cashflowData[i].year;
+                        break;
+                    }
+                }
+            }
+            
+            const fireAgeAtAchievement = fireAchieved ? cashflowData.find(d => d.year === fireYear).age : '未達成';
+            const fireAssets = fireAchieved ? cashflowData.find(d => d.year === fireYear).netAsset : 0;
+            
+            // 結果表示
+            let html = `
+                <div class="fire-style-box">
+                    <h3>あなたのFIREスタイル：${fireStyle}</h3>
+                    <p>${fireStyleDesc}</p>
+                    <div class="fire-info">
+                        <div class="fire-info-item">
+                            <strong>FIRE達成年</strong>
+                            <span>${fireAchieved ? fireYear + '年（' + fireAgeAtAchievement + '歳）' : '目標達成困難'}</span>
+                        </div>
+                        <div class="fire-info-item">
+                            <strong>FIRE時の資産</strong>
+                            <span>${fireAchieved ? fireAssets.toLocaleString() + '万円' : '-'}</span>
+                        </div>
+                        <div class="fire-info-item">
+                            <strong>最終資産額</strong>
+                            <span>${cashflowData[cashflowData.length-1].netAsset.toLocaleString()}万円</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (!fireAchieved) {
+                html += `
+                    <div class="note" style="background: #f8d7da; border-color: #dc3545;">
+                        <strong>⚠️ 警告</strong><br>
+                        現在の設定では、FIRE目標年齢に到達しても資産が不足する可能性があります。
+                        以下を検討してください：<br>
+                        • 副業収入を増やす<br>
+                        • FIRE後も働く期間を延ばす<br>
+                        • 支出を見直す<br>
+                        • FIRE目標年齢を遅らせる
+                    </div>
+                `;
+            }
+            
+            // キャッシュフロー表
+            html += `
+                <h2 class="section-title">キャッシュフロー表</h2>
+                <button class="btn-secondary" onclick="downloadCSV()">📥 CSV出力</button>
+                <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>年</th>
+                                <th>年齢</th>
+                                <th class="important-col">収入計</th>
+                                <th class="important-col">支出計</th>
+                                <th class="important-col">収支</th>
+                                <th class="important-col">純資産</th>
+                                <th>本業</th>
+                                <th>副業</th>
+                                <th>FIRE後労働</th>
+                                <th>運用益</th>
+                                <th>年金</th>
+                                <th>税・社保</th>
+                                <th>生活費</th>
+                                <th>教育費</th>
+                                <th>ローン</th>
+                                <th>その他</th>
+                                <th>総資産</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            cashflowData.forEach(row => {
+                const rowClass = row.cashflow < 0 ? 'style="color: red;"' : '';
+                html += `
+                    <tr ${rowClass}>
+                        <td>${row.year}</td>
+                        <td>${row.age}</td>
+                        <td class="important-col">${row.totalIncome.toLocaleString()}</td>
+                        <td class="important-col">${row.totalExpenses.toLocaleString()}</td>
+                        <td class="important-col">${row.cashflow.toLocaleString()}</td>
+                        <td class="important-col">${row.netAsset.toLocaleString()}</td>
+                        <td>${row.mainIncome.toLocaleString()}</td>
+                        <td>${row.sideJobIncome.toLocaleString()}</td>
+                        <td>${row.fireWorkIncome.toLocaleString()}</td>
+                        <td>${row.investmentReturn.toLocaleString()}</td>
+                        <td>${row.pension.toLocaleString()}</td>
+                        <td>${row.taxAndSocial.toLocaleString()}</td>
+                        <td>${row.monthlyExpenses.toLocaleString()}</td>
+                        <td>${row.educationCost.toLocaleString()}</td>
+                        <td>${row.loanPayment.toLocaleString()}</td>
+                        <td>${row.otherExpenses.toLocaleString()}</td>
+                        <td>${row.totalAsset.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // グラフ
+            html += `
+                <h2 class="section-title">グラフ</h2>
+                <div class="chart-grid">
+                    <div>
+                        <h3>資産推移</h3>
+                        <div class="chart-container">
+                            <canvas id="assetChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>年間収支</h3>
+                        <div class="chart-container">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>収入構成比</h3>
+                        <div class="chart-container">
+                            <canvas id="incomeChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>支出構成比</h3>
+                        <div class="chart-container">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultsContent').innerHTML = html;
+            
+            // グラフ描画
+            setTimeout(() => {
+                drawCharts(fireYear);
+            }, 100);
+            
+            // 結果タブに切り替え
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector('.tab:last-child').classList.add('active');
+            document.getElementById('results').classList.add('active');
+        }
+        
+        function drawCharts(fireYear) {
+            // 既存のチャートを破棄
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            const years = cashflowData.map(d => d.year);
+            
+            // 資産推移
+            const assetCtx = document.getElementById('assetChart').getContext('2d');
+            charts.asset = new Chart(assetCtx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '純資産',
+                        data: cashflowData.map(d => d.netAsset),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true
+                    }, {
+                        label: '総資産',
+                        data: cashflowData.map(d => d.totalAsset),
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        annotation: fireYear ? {
+                            annotations: [{
+                                type: 'line',
+                                xMin: fireYear,
+                                xMax: fireYear,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    content: 'FIRE達成',
+                                    enabled: true,
+                                    position: 'top'
+                                }
+                            }]
+                        } : {}
+                    },
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+            
+            // 年間収支
+            const cashflowCtx = document.getElementById('cashflowChart').getContext('2d');
+            charts.cashflow = new Chart(cashflowCtx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '年間収支',
+                        data: cashflowData.map(d => d.cashflow),
+                        backgroundColor: cashflowData.map(d => d.cashflow >= 0 ? 'rgba(72, 187, 120, 0.8)' : 'rgba(245, 101, 101, 0.8)')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // 収入構成比
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            charts.income = new Chart(incomeCtx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '本業',
+                        data: cashflowData.map(d => d.mainIncome),
+                        backgroundColor: '#667eea'
+                    }, {
+                        label: '副業',
+                        data: cashflowData.map(d => d.sideJobIncome),
+                        backgroundColor: '#f6ad55'
+                    }, {
+                        label: 'FIRE後労働',
+                        data: cashflowData.map(d => d.fireWorkIncome),
+                        backgroundColor: '#fbd38d'
+                    }, {
+                        label: '運用益',
+                        data: cashflowData.map(d => d.investmentReturn),
+                        backgroundColor: '#48bb78'
+                    }, {
+                        label: '年金',
+                        data: cashflowData.map(d => d.pension),
+                        backgroundColor: '#90cdf4'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+            
+            // 支出構成比
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            charts.expense = new Chart(expenseCtx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '生活費',
+                        data: cashflowData.map(d => d.monthlyExpenses),
+                        backgroundColor: '#667eea'
+                    }, {
+                        label: '教育費',
+                        data: cashflowData.map(d => d.educationCost),
+                        backgroundColor: '#f6ad55'
+                    }, {
+                        label: 'ローン返済',
+                        data: cashflowData.map(d => d.loanPayment),
+                        backgroundColor: '#fc8181'
+                    }, {
+                        label: '税金・社保',
+                        data: cashflowData.map(d => d.taxAndSocial),
+                        backgroundColor: '#a0aec0'
+                    }, {
+                        label: 'その他',
+                        data: cashflowData.map(d => d.otherExpenses),
+                        backgroundColor: '#48bb78'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+        }
+        
+        function downloadCSV() {
+            let csv = 'Year,Age,Total Income,Total Expenses,Cashflow,Net Asset,Main Income,Side Job,FIRE Work,Investment Return,Pension,Tax & Social,Living Expenses,Education,Loan,Other,Total Asset\n';
+            
+            cashflowData.forEach(row => {
+                csv += `${row.year},${row.age},${row.totalIncome},${row.totalExpenses},${row.cashflow},${row.netAsset},${row.mainIncome},${row.sideJobIncome},${row.fireWorkIncome},${row.investmentReturn},${row.pension},${row.taxAndSocial},${row.monthlyExpenses},${row.educationCost},${row.loanPayment},${row.otherExpenses},${row.totalAsset}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'fire_simulation.csv';
+            link.click();
+        }
+        
+        // ページ読み込み時にデータ復元
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
